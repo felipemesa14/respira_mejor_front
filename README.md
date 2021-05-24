@@ -1,6 +1,6 @@
-# Respira Mejor App (respira_mejor_front)
+# RespiraMejor (y)
 
-Proyecto para visualizar la contaminación ambiental de las ciudades inteligentes de colombia
+Proyecto de Aula
 
 ## Install the dependencies
 ```bash

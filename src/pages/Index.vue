@@ -1,49 +1,109 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page class="col">
+ <div class="row q-pa-md">
+   <div class="col-md-6">
+    <q-select v-model="model" :options="options" label="Año" />
+   </div>
+  </div>
+ <div id="mapa">
+      <gmap-map
+        :center="center"
+        :zoom="zoom"
+        style="width: 100%; height: 85vh;">
+        <GmapCircle
+          v-for="(pin, indexRed) in markersRed"
+          :key="indexRed"
+          :center="pin.position"
+          :radius="500"
+          :visible="true"
+          :options="{fillColor:'red',fillOpacity:0.5}">
+        </GmapCircle>
+        <GmapCircle
+          v-for="(pin, indexYellow) in markersYellow"
+          :key="indexYellow"
+          :center="pin.position"
+          :radius="500"
+          :visible="true"
+          :options="{fillColor:'yellow',fillOpacity:0.5}">
+        </GmapCircle>
+      </gmap-map>
+  </div>
   </q-page>
 </template>
 
-<script lang="ts">
-import { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/CompositionComponent.vue';
-import { defineComponent, ref } from '@vue/composition-api';
+<script>
+import Vue from 'vue'
+import * as VueGoogleMaps from 'vue2-google-maps'
+import axios from 'axios'
 
-export default defineComponent({
-  name: 'PageIndex',
-  components: { ExampleComponent },
-  setup() {
-    const todos = ref<Todo[]>([
-      {
-        id: 1,
-        content: 'ct1'
-      },
-      {
-        id: 2,
-        content: 'ct2'
-      },
-      {
-        id: 3,
-        content: 'ct3'
-      },
-      {
-        id: 4,
-        content: 'ct4'
-      },
-      {
-        id: 5,
-        content: 'ct5'
-      }
-    ]);
-    const meta = ref<Meta>({
-      totalCount: 1200
-    });
-    return { todos, meta };
+Vue.use(VueGoogleMaps, {
+  load: {
+    key: 'AIzaSyAbBhECxbT35lhq-Wrj-ERv1gBvYs7b5uw'
   }
-});
+})
+
+export default {
+  name: 'PageIndex',
+  watch: {
+    model () {
+      this.listarMarcadores()
+    }
+  },
+  methods: {
+    validateHighLevel (level) {
+      console.log(level)
+      if (level > 8) {
+        return true
+      } else {
+        return false
+      }
+    },
+    listarMarcadores () {
+      this.markersRed = []
+      this.markersYellow = []
+      axios('http://localhost:8000/api/marcadores/' + this.model)
+        .then(response => {
+          this.myJson = response.data
+          this.myJson.map(json => {
+            if (this.validateHighLevel(json.nivel)) {
+              this.markersRed.push({ Id: json.id, name: json.id, position: { lat: parseFloat(json.lat), lng: parseFloat(json.lng) } })
+            } else {
+              this.markersYellow.push({ Id: json.id, name: json.id, position: { lat: parseFloat(json.lat), lng: parseFloat(json.lng) } })
+            }
+            return true
+          }
+          )
+          console.log(this.markersRed)
+          console.log(this.markersYellow)
+        })
+        .catch(error => console.log('Error', error.message))
+    }
+  },
+  mounted () {
+    this.listarMarcadores()
+  },
+  data () {
+    return {
+      myJson: [],
+      center: {
+        lat: 6.247785784,
+        lng: -75.5702257
+      },
+      zoom: 13,
+      markersRed: [],
+      markersYellow: [],
+      model: '2021',
+      options: [
+        '2017',
+        '2018',
+        '2019',
+        '2020',
+        '2021',
+        '2022',
+        '2023',
+        '2024'
+      ]
+    }
+  }
+}
 </script>
